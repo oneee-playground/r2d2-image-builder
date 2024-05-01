@@ -2,39 +2,45 @@ package main
 
 import (
 	"context"
-	"path/filepath"
+	"fmt"
+	"io"
+	"os"
+	"time"
 
-	"github.com/docker/docker/client"
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/oneee-playground/r2d2-image-builder/git"
 	"github.com/oneee-playground/r2d2-image-builder/image"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	client, err := client.NewClientWithOpts()
+	logrus.SetOutput(io.Discard)
+	os.MkdirAll("/tmp/kaniko", 0755)
+	defer os.RemoveAll("/tmp")
+	fs := osfs.New("/tmp/repo")
+
+	startJob := time.Now()
+
+	startFetch := time.Now()
+	err := git.FetchSource(context.Background(), fs, "oneee-playground/hello-docker", "ea1c67aa43b30a22f4804c2d6d9fb9b7c65663ea")
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("fetch took: %s\n", time.Since(startFetch))
 
-	// fs := osfs.New("./tmp")
-	// defer os.RemoveAll(fs.Root())
 
-	// err = git.FetchSource(context.Background(), fs, "oneee-playground/hello-docker", "dc94744b9debac7fb14b164d1775f7e1423ad1a0")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	dir, _ := filepath.Abs("./tmp")
-
-	err = image.Build(context.Background(), client, image.BuildOpts{
+	startBuild := time.Now()
+	err = image.Build(context.Background(), image.BuildOpts{
 		NumCPU:   1,
 		MemoryMB: 4000,
-		Dir:      dir,
+		Dir:      fs.Root(),
 	})
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("build took: %s\n", time.Since(startBuild))
 
-	err = image.PushAndPrune(context.Background(), client)
-	if err != nil {
-		panic(err)
-	}
+
+
+	fmt.Printf("job took: %s\n", time.Since(startJob))
 }
