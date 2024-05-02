@@ -7,40 +7,52 @@ import (
 
 	"github.com/GoogleContainerTools/kaniko/pkg/config"
 	"github.com/GoogleContainerTools/kaniko/pkg/executor"
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/pkg/errors"
 )
 
 const (
-	baseCPUShare = 100000
-	bytesPerMB   = 1000 * 1000
-
-	imageTag          = "temporary-image"
-	imageRegistryAddr = "registry.hub.docker.com"
+	imageTag          = "temporary-image:latest"
+	imageRegistryAddr = "docker.io"
 	imageRegistryUser = "oneeonly"
 )
 
-type BuildOpts struct {
-	NumCPU   int64
-	MemoryMB int64
-	Dir      string
-}
-
-func Build(ctx context.Context, opts BuildOpts) error {
+func Build(ctx context.Context, path string) (v1.Image, error) {
 	o := &config.KanikoOptions{
-		DockerfilePath: filepath.Join(opts.Dir, "Dockerfile"),
-		IgnoreVarRun:   true,
-		NoPush:         true,
-		SrcContext:     opts.Dir,
+		DockerfilePath: filepath.Join(path, "Dockerfile"),
+		SrcContext:     path,
 		SnapshotMode:   "full",
-		CustomPlatform: "linux/amd64",
+		SingleSnapshot: true,
+		NoPushCache:    true,
+		CustomPlatform: "linux/arm64/v8",
 	}
 
 	image, err := executor.DoBuild(o)
 	if err != nil {
-		return errors.Wrap(err, "building image")
+		return nil, errors.Wrap(err, "building image")
 	}
 
-	fmt.Println(image)
+	return image, nil
+}
+
+func Push(image v1.Image) error {
+	tag, err := name.NewTag(createTag())
+	if err != nil {
+		return errors.Wrap(err, "creating new tag")
+	}
+
+	err = crane.Push(image, tag.Name(),
+		crane.WithAuth(authn.FromConfig(authn.AuthConfig{
+			Username: imageRegistryUser,
+			Password: "secret",
+		})),
+	)
+	if err != nil {
+		return errors.Wrap(err, "pushing image to registry")
+	}
 
 	return nil
 }

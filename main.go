@@ -16,31 +16,34 @@ import (
 func main() {
 	logrus.SetOutput(io.Discard)
 	os.MkdirAll("/tmp/kaniko", 0755)
+	defer os.MkdirAll("/tmp", 0755)
 	defer os.RemoveAll("/tmp")
 	fs := osfs.New("/tmp/repo")
 
 	startJob := time.Now()
 
 	startFetch := time.Now()
-	err := git.FetchSource(context.Background(), fs, "oneee-playground/hello-docker", "ea1c67aa43b30a22f4804c2d6d9fb9b7c65663ea")
+	err := git.FetchSource(context.Background(), fs, "oneee-playground/hello-docker", "745b05e587d5f3903c7622d19a4f41e42fbf5a6c")
 	if err != nil {
-		panic(err)
+		fmt.Println("err: ", err)
+		return
 	}
 	fmt.Printf("fetch took: %s\n", time.Since(startFetch))
 
-
 	startBuild := time.Now()
-	err = image.Build(context.Background(), image.BuildOpts{
-		NumCPU:   1,
-		MemoryMB: 4000,
-		Dir:      fs.Root(),
-	})
+	img, err := image.Build(context.Background(), fs.Root())
 	if err != nil {
-		panic(err)
+		fmt.Println("err: ", err)
+		return
 	}
 	fmt.Printf("build took: %s\n", time.Since(startBuild))
 
-
+	startPush := time.Now()
+	if err := image.Push(img); err != nil {
+		fmt.Println("err: ", err)
+		return
+	}
+	fmt.Printf("push took: %s\n", time.Since(startPush))
 
 	fmt.Printf("job took: %s\n", time.Since(startJob))
 }
