@@ -2,48 +2,92 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"os"
-	"time"
+	"path/filepath"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/oneee-playground/r2d2-image-builder/git"
 	"github.com/oneee-playground/r2d2-image-builder/image"
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	logger *logrus.Logger
+
+	tmpfs = os.TempDir()
+)
+
+func init() {
+	// Keep it this way for later use.
+	logger = logrus.New()
+
+	// Disable kankio logger.
+	// TODO: Change output dst to show build logs to user.
+	// logrus.SetOutput(io.Discard)
+	logrus.SetLevel(logrus.InfoLevel)
+}
+
 func main() {
-	logrus.SetOutput(io.Discard)
-	os.MkdirAll("/tmp/kaniko", 0755)
-	defer os.MkdirAll("/tmp", 0755)
-	defer os.RemoveAll("/tmp")
-	fs := osfs.New("/tmp/repo")
-
-	startJob := time.Now()
-
-	startFetch := time.Now()
-	err := git.FetchSource(context.Background(), fs, "oneee-playground/hello-docker", "745b05e587d5f3903c7622d19a4f41e42fbf5a6c")
+	err := os.MkdirAll(filepath.Join(tmpfs, "kaniko"), 0755)
 	if err != nil {
-		fmt.Println("err: ", err)
-		return
+		logger.Fatalf("could not create directory for kaniko: %v", err)
 	}
-	fmt.Printf("fetch took: %s\n", time.Since(startFetch))
 
-	startBuild := time.Now()
-	img, err := image.Build(context.Background(), fs.Root())
+	lambda.Start(HandleBuildImage)
+}
+
+type BuildImageRequest struct {
+	Repository string `json:"repository"`
+	CommitHash string `json:"commitHash"`
+}
+
+func HandleBuildImage(ctx context.Context, req BuildImageRequest) {
+	defer cleanupFS()
+
+	logger.Info("creating source directory")
+	fs := osfs.New(filepath.Join(tmpfs, "source"))
+
+	logger.Infof("fetching source from: %s:%s", req.Repository, req.CommitHash)
+	err := git.FetchSource(ctx, fs, req.Repository, req.CommitHash)
 	if err != nil {
-		fmt.Println("err: ", err)
+		logger.Errorf("failed to fetch source: %v", err)
 		return
 	}
-	fmt.Printf("build took: %s\n", time.Since(startBuild))
 
-	startPush := time.Now()
-	if err := image.Push(img); err != nil {
-		fmt.Println("err: ", err)
+	logger.Info("building image from source")
+	img, err := image.Build(ctx, fs.Root())
+	if err != nil {
+		logger.Errorf("failed to build image: %v", err)
 		return
 	}
-	fmt.Printf("push took: %s\n", time.Since(startPush))
 
-	fmt.Printf("job took: %s\n", time.Since(startJob))
+	logger.Info("pushing image")
+	if err := image.Push(ctx, img); err != nil {
+		logger.Errorf("failed to push image : %v", err)
+		return
+	}
+}
+
+func cleanupFS() {
+	d, err := os.Open(tmpfs)
+	if err != nil {
+		logger.Fatalf("could not open /tmp: %v", err)
+	}
+
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		logger.Fatalf("could not read children of /tmp: %v", err)
+	}
+
+	for _, name := range names {
+		dir := filepath.Join(tmpfs, name)
+		if err := os.RemoveAll(dir); err != nil {
+			logger.Fatalf("could not remove %s: %v", dir, err)
+		}
+	}
+
+	if err := os.MkdirAll(filepath.Join(tmpfs, "kaniko"), 0755); err != nil {
+		logger.Fatalf("could not restore /tmp/kaniko: %v", err)
+	}
 }

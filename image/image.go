@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/GoogleContainerTools/kaniko/pkg/config"
@@ -38,7 +39,7 @@ func Build(ctx context.Context, path string) (v1.Image, error) {
 	return image, nil
 }
 
-func Push(image v1.Image) error {
+func Push(ctx context.Context, image v1.Image) error {
 	tag, err := name.NewTag(createTag())
 	if err != nil {
 		return errors.Wrap(err, "creating new tag")
@@ -47,7 +48,7 @@ func Push(image v1.Image) error {
 	err = crane.Push(image, tag.Name(),
 		crane.WithAuth(authn.FromConfig(authn.AuthConfig{
 			Username: imageRegistryUser,
-			Password: "secret",
+			Password: os.Getenv("DOCKERHUB_SECRET"),
 		})),
 	)
 	if err != nil {
