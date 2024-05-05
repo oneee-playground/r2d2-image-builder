@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/GoogleContainerTools/kaniko v1.22.0
+	github.com/aws/aws-lambda-go v1.47.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/google/go-containerregistry v0.19.1
@@ -12,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 )
 
-replace github.com/GoogleContainerTools/kaniko => github.com/oneee-playground/kaniko v0.0.0-20240502062225-a7b51a91744f
+replace github.com/GoogleContainerTools/kaniko => github.com/oneee-playground/kaniko v0.0.0-20240505131118-0b8b2ed26525
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
