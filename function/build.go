@@ -16,6 +16,7 @@ import (
 type BuildImageRequest struct {
 	Repository string `json:"repository"`
 	CommitHash string `json:"commitHash"`
+	Platform   string `json:"platform"`
 }
 
 func HandleBuildImage(ctx context.Context, req BuildImageRequest) error {
@@ -35,13 +36,23 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) error {
 	}
 
 	logrus.Info("Building image from source")
-	img, err := image.Build(ctx, fs.Root())
+	img, err := image.Build(ctx, image.BuildOpts{
+		ContextPath: fs.Root(),
+		Platform:    req.Platform,
+	})
 	if err != nil {
 		return errors.Wrap(err, "failed to build image")
 	}
 
 	logrus.Info("Pushing image")
-	if err := image.Push(ctx, img); err != nil {
+	err = image.Push(ctx, img, image.PushOpts{
+		Auth:         config.RegistryAuth,
+		RegistryName: config.RegistryAddr,
+		RegistryUser: config.RegistryUser,
+		Repository:   config.Repository,
+		Tag:          config.DefaultTag,
+	})
+	if err != nil {
 		return errors.Wrap(err, "failed to push image")
 	}
 

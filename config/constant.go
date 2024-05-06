@@ -1,7 +1,7 @@
 package config
 
-import "os"
+const (
+	Tmpfs = "/tmp"
 
-var (
-	Tmpfs = os.TempDir()
+	DefaultTag = "latest"
 )

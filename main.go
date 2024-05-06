@@ -2,12 +2,15 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/oneee-playground/r2d2-image-builder/config"
 	"github.com/oneee-playground/r2d2-image-builder/function"
 	"github.com/oneee-playground/r2d2-image-builder/util"
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
+	config.LoadFromEnv()
+
 	// TODO: Maybe change this.
 	logrus.SetLevel(logrus.InfoLevel)
 }
