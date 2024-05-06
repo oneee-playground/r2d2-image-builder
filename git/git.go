@@ -38,12 +38,7 @@ func FetchSource(ctx context.Context, fs billy.Filesystem, repo, hash string) er
 
 // clone performs platform-dependent cloning via GitHub.
 func clone(ctx context.Context, fs billy.Filesystem, s storage.Storer, path string) (*git.Repository, error) {
-	r, err := git.CloneContext(ctx, s, fs, &git.CloneOptions{
+	return git.CloneContext(ctx, s, fs, &git.CloneOptions{
 		URL: fmt.Sprintf("https://github.com/%s.git", path),
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
 }
