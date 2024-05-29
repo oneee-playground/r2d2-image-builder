@@ -45,7 +45,7 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (*BuildImageRe
 	err := git.FetchSource(ctx, fs, req.Repository, req.CommitHash)
 	if err != nil {
 		err = errors.Wrap(err, "failed to fetch source")
-		return buildResponse(req.ID, since(start), err), err
+		return buildResponse(req.ID, since(start), err), nil
 	}
 
 	logrus.Info("Building image from source")
@@ -55,7 +55,7 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (*BuildImageRe
 	})
 	if err != nil {
 		err = errors.Wrap(err, "failed to build image")
-		return buildResponse(req.ID, since(start), err), err
+		return buildResponse(req.ID, since(start), err), nil
 	}
 
 	logrus.Info("Pushing image")
@@ -68,7 +68,7 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (*BuildImageRe
 	})
 	if err != nil {
 		err = errors.Wrap(err, "failed to push image")
-		return buildResponse(req.ID, since(start), err), err
+		return buildResponse(req.ID, since(start), err), nil
 	}
 
 	return buildResponse(req.ID, since(start), nil), nil
