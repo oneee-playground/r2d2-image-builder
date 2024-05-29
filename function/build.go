@@ -3,8 +3,10 @@ package function
 import (
 	"context"
 	"path/filepath"
+	"time"
 
 	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/google/uuid"
 	"github.com/oneee-playground/r2d2-image-builder/config"
 	"github.com/oneee-playground/r2d2-image-builder/git"
 	"github.com/oneee-playground/r2d2-image-builder/image"
@@ -14,17 +16,27 @@ import (
 )
 
 type BuildImageRequest struct {
-	Repository string `json:"repository"`
-	CommitHash string `json:"commitHash"`
-	Platform   string `json:"platform"`
+	ID         uuid.UUID `json:"id"`
+	Repository string    `json:"repository"`
+	CommitHash string    `json:"commitHash"`
+	Platform   string    `json:"platform"`
 }
 
-func HandleBuildImage(ctx context.Context, req BuildImageRequest) error {
+type BuildImageResponse struct {
+	ID      uuid.UUID     `json:"id"`
+	Success bool          `json:"success"`
+	Took    time.Duration `json:"took"`
+	Extra   string        `json:"extra"`
+}
+
+func HandleBuildImage(ctx context.Context, req BuildImageRequest) (*BuildImageResponse, error) {
 	defer func() {
 		if err := util.CleanupFS(); err != nil {
 			logrus.Fatal(err)
 		}
 	}()
+
+	start := time.Now()
 
 	logrus.Info("Creating source directory")
 	fs := osfs.New(filepath.Join(config.Tmpfs, "source"))
@@ -32,7 +44,8 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) error {
 	logrus.Infof("Fetching source from: %s:%s", req.Repository, req.CommitHash)
 	err := git.FetchSource(ctx, fs, req.Repository, req.CommitHash)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch source")
+		err = errors.Wrap(err, "failed to fetch source")
+		return buildResponse(req.ID, since(start), err), err
 	}
 
 	logrus.Info("Building image from source")
@@ -41,7 +54,8 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) error {
 		Platform:    req.Platform,
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to build image")
+		err = errors.Wrap(err, "failed to build image")
+		return buildResponse(req.ID, since(start), err), err
 	}
 
 	logrus.Info("Pushing image")
@@ -53,8 +67,22 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) error {
 		Tag:          config.DefaultTag,
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to push image")
+		err = errors.Wrap(err, "failed to push image")
+		return buildResponse(req.ID, since(start), err), err
 	}
 
-	return nil
+	return buildResponse(req.ID, since(start), nil), nil
+}
+
+func buildResponse(id uuid.UUID, took time.Duration, err error) *BuildImageResponse {
+	res := BuildImageResponse{ID: id, Took: took, Success: true}
+	if err != nil {
+		res.Success = false
+		res.Extra = err.Error()
+	}
+	return &res
+}
+
+func since(t time.Time) time.Duration {
+	return time.Since(t)
 }
