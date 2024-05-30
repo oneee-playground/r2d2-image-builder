@@ -18,7 +18,5 @@ func LoadFromEnv() {
 		Password: dockerhubSecret,
 	})
 
-	AWSAccessKeyID = os.Getenv("AWS_ACCESS_KEY_ID")
-	AWSSecretKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	MessageQueueURL = os.Getenv("MESSAGE_QUEUE_URL")
 }

@@ -11,7 +11,5 @@ var (
 )
 
 var (
-	AWSAccessKeyID  string
-	AWSSecretKey    string
 	MessageQueueURL string
 )

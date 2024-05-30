@@ -1,13 +1,17 @@
 package aws
 
 import (
+	"context"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/oneee-playground/r2d2-image-builder/config"
+	conf "github.com/oneee-playground/r2d2-image-builder/config"
+	"github.com/pkg/errors"
 )
+
+var awsConfig aws.Config
 
 var sqsOnce sync.Once
 
@@ -15,18 +19,18 @@ var sqsClient *sqs.Client
 
 func SQSClient() *sqs.Client {
 	sqsOnce.Do(func() {
-		sqsClient = sqs.NewFromConfig(getAWSConfig())
+		sqsClient = sqs.NewFromConfig(awsConfig)
 	})
 	return sqsClient
 }
 
-func getAWSConfig() aws.Config {
-	credProvider := credentials.NewStaticCredentialsProvider(config.AWSAccessKeyID, config.AWSSecretKey, "")
-
-	conf := aws.Config{
-		Region:      config.AWSRegion,
-		Credentials: aws.NewCredentialsCache(credProvider),
+func LoadConfig(ctx context.Context) error {
+	conf, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(conf.AWSRegion))
+	if err != nil {
+		return errors.Wrap(err, "loading aws config")
 	}
 
-	return conf
+	awsConfig = conf
+
+	return nil
 }

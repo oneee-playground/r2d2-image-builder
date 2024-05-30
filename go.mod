@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/aws/aws-sdk-go v1.53.12
 	github.com/aws/aws-sdk-go-v2 v1.27.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.11
+	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.32.3
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
@@ -39,7 +39,7 @@ require (
 	github.com/Microsoft/hcsshim v0.12.3 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.27.11 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.11 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.7 // indirect

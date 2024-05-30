@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/uuid"
 	aws_util "github.com/oneee-playground/r2d2-image-builder/aws"
+	"github.com/oneee-playground/r2d2-image-builder/config"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +30,7 @@ func Publish(ctx context.Context, id uuid.UUID, took time.Duration, err error) e
 
 	input := &sqs.SendMessageInput{
 		MessageBody: aws.String(string(payload)),
-		QueueUrl:    aws.String("notfound"),
+		QueueUrl:    aws.String(config.MessageQueueURL),
 	}
 
 	if _, err := client.SendMessage(ctx, input); err != nil {
