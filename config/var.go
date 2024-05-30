@@ -9,3 +9,7 @@ var (
 
 	RegistryAuth authn.Authenticator
 )
+
+var (
+	MessageQueueURL string
+)

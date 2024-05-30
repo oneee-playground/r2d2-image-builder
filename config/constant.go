@@ -5,3 +5,7 @@ const (
 
 	DefaultTag = "latest"
 )
+
+const (
+	AWSRegion = "ap-northeast-2"
+)

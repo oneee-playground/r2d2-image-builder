@@ -17,4 +17,6 @@ func LoadFromEnv() {
 		Username: RegistryUser,
 		Password: dockerhubSecret,
 	})
+
+	MessageQueueURL = os.Getenv("MESSAGE_QUEUE_URL")
 }
