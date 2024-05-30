@@ -9,3 +9,9 @@ var (
 
 	RegistryAuth authn.Authenticator
 )
+
+var (
+	AWSAccessKeyID  string
+	AWSSecretKey    string
+	MessageQueueURL string
+)
