@@ -3,6 +3,7 @@ package function
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-billy/v5/osfs"
@@ -18,6 +19,7 @@ import (
 
 type BuildImageRequest struct {
 	ID         uuid.UUID `json:"id"`
+	TaskID     uuid.UUID `json:"taskID"`
 	Repository string    `json:"repository"`
 	CommitHash string    `json:"commitHash"`
 	Platform   string    `json:"platform"`
@@ -58,8 +60,8 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (e error) {
 		Auth:         config.RegistryAuth,
 		RegistryName: config.RegistryAddr,
 		RegistryUser: config.RegistryUser,
-		Repository:   config.Repository,
-		Tag:          config.DefaultTag,
+		Repository:   req.TaskID.String(),
+		Tag:          strings.Join([]string{req.Repository, req.CommitHash}, "-"),
 	})
 	if err != nil {
 		return event.Publish(ctx, req.ID, since(start), errors.Wrap(err, "failed to push image"))
