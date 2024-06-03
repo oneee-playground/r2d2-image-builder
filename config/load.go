@@ -9,7 +9,6 @@ import (
 func LoadFromEnv() {
 	RegistryAddr = os.Getenv("REGISTRY_ADDR")
 	RegistryUser = os.Getenv("REGISTRY_USER")
-	Repository = os.Getenv("REGISTRY_REPO")
 
 	dockerhubSecret := os.Getenv("DOCKERHUB_SECRET")
 
