@@ -45,19 +45,24 @@ type PushOpts struct {
 }
 
 func Push(ctx context.Context, image v1.Image, opts PushOpts) error {
-	err := crane.Push(image, createTag(opts), crane.WithAuth(opts.Auth))
+	dst := createDst(opts)
+
+	err := crane.Push(image, dst, crane.WithAuth(opts.Auth))
 	if err != nil {
 		return errors.Wrap(err, "pushing image to registry")
+	}
+
+	if err := crane.Tag(dst, opts.Tag, crane.WithAuth(opts.Auth)); err != nil {
+		return errors.Wrap(err, "tagging image")
 	}
 
 	return nil
 }
 
-func createTag(opts PushOpts) string {
-	return fmt.Sprintf("%s/%s/%s:%s",
+func createDst(opts PushOpts) string {
+	return fmt.Sprintf("%s/%s/%s",
 		opts.RegistryName,
 		opts.RegistryUser,
 		opts.Repository,
-		opts.Tag,
 	)
 }
