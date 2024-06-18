@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/GoogleContainerTools/kaniko/pkg/config"
 	"github.com/GoogleContainerTools/kaniko/pkg/executor"
@@ -52,7 +53,7 @@ func Push(ctx context.Context, image v1.Image, opts PushOpts) error {
 		return errors.Wrap(err, "pushing image to registry")
 	}
 
-	if err := crane.Tag(dst, opts.Tag, crane.WithAuth(opts.Auth)); err != nil {
+	if err := crane.Tag(dst, strings.Replace(opts.Tag, "/", "-", 1), crane.WithAuth(opts.Auth)); err != nil {
 		return errors.Wrap(err, "tagging image")
 	}
 
