@@ -9,7 +9,6 @@ import (
 	"github.com/GoogleContainerTools/kaniko/pkg/executor"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/crane"
-	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/pkg/errors"
 )
@@ -46,12 +45,7 @@ type PushOpts struct {
 }
 
 func Push(ctx context.Context, image v1.Image, opts PushOpts) error {
-	tag, err := name.NewTag(createTag(opts))
-	if err != nil {
-		return errors.Wrap(err, "creating new tag")
-	}
-
-	err = crane.Push(image, tag.Name(), crane.WithAuth(opts.Auth))
+	err := crane.Push(image, createTag(opts), crane.WithAuth(opts.Auth))
 	if err != nil {
 		return errors.Wrap(err, "pushing image to registry")
 	}
