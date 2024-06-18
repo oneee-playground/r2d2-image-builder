@@ -52,7 +52,7 @@ jobs:
           tags: ${{ steps.get-image-tag.outputs.image-tag }}
           # This should be set to false because AWS Lambda does not supprot multi architecture image.
           provenance: false 
-          platforms: linux/arm64
+          platforms: linux/amd64
 
   deploy-to-aws-lambda:
     name: Deploy to AWS Lambda
