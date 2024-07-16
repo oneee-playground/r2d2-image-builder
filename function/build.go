@@ -32,6 +32,8 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (e error) {
 		}
 	}()
 
+	logrus.Info(req)
+
 	start := time.Now()
 
 	logrus.Info("Creating source directory")
