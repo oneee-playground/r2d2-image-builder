@@ -41,6 +41,7 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (e error) {
 
 	err := git.FetchSource(ctx, fs, req.Repository, req.CommitHash)
 	if err != nil {
+		logrus.Error(err.Error())
 		return event.Publish(ctx, req.ID, since(start), errors.Wrap(err, "failed to fetch source"))
 	}
 
@@ -51,6 +52,7 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (e error) {
 		Platform:    req.Platform,
 	})
 	if err != nil {
+		logrus.Error(err.Error())
 		return event.Publish(ctx, req.ID, since(start), errors.Wrap(err, "failed to build image"))
 	}
 
@@ -64,6 +66,7 @@ func HandleBuildImage(ctx context.Context, req BuildImageRequest) (e error) {
 		Tag:          strings.Join([]string{req.Repository, req.CommitHash}, "-"),
 	})
 	if err != nil {
+		logrus.Error(err.Error())
 		return event.Publish(ctx, req.ID, since(start), errors.Wrap(err, "failed to push image"))
 	}
 
